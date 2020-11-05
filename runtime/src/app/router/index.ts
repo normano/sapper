@@ -8,6 +8,7 @@ import {
 } from '@sapper/internal/manifest-client';
 import find_anchor from './find_anchor';
 import { Page, Query } from '@sapper/common';
+import { canNavigate } from '../onNavigate/index';
 
 export let uid = 1;
 export function set_uid(n: number) {
@@ -20,6 +21,7 @@ export function set_cid(n: number) {
 }
 
 const _history: History = typeof history !== 'undefined' ? history : {
+	go: (delta: number) => {},
 	pushState: () => {},
 	replaceState: () => {},
 	scrollRestoration: 'auto'
@@ -110,7 +112,7 @@ export function select_target(url: URL): Target {
 	}
 }
 
-function handle_click(event: MouseEvent) {
+async function handle_click(event: MouseEvent) {
 	// Adapted from https://github.com/visionmedia/page.js
 	// MIT license https://github.com/visionmedia/page.js#license
 	if (which(event) !== 1) return;
@@ -147,9 +149,12 @@ function handle_click(event: MouseEvent) {
 
 	const target = select_target(url);
 	if (target) {
+		event.preventDefault();
+		if (!(await canNavigate(target.page))) {
+			return;
+		}
 		const noscroll = a.hasAttribute('sapper:noscroll');
 		navigate(target, null, noscroll, url.hash);
-		event.preventDefault();
 		_history.pushState({ id: cid }, '', url.href);
 	}
 }
@@ -165,13 +170,17 @@ function scroll_state() {
 	};
 }
 
-function handle_popstate(event: PopStateEvent) {
+async function handle_popstate(event: PopStateEvent) {
 	scroll_history[cid] = scroll_state();
 
 	if (event.state) {
 		const url = new URL(location.href);
 		const target = select_target(url);
 		if (target) {
+			if (!(await canNavigate(target.page))) {
+				history.go(cid - event.state.id);
+				return;
+			}
 			navigate(target, event.state.id);
 		} else {
 			// eslint-disable-next-line

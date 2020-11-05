@@ -45,3 +45,5 @@ export interface Page {
 	params: Record<string, string>;
 	query: Record<string, string | string[]>;
 }
+
+export type OnNavigateCallback = (page: Page) => any; 
