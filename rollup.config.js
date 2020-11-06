@@ -8,7 +8,7 @@ import { builtinModules } from 'module';
 const external = [].concat(
 	Object.keys(pkg.dependencies),
 	Object.keys(process.binding('natives')),
-	'sapper/core.js',
+	'@excsn/sapper/core.js',
 	'svelte/compiler'
 );
 
@@ -54,7 +54,8 @@ export default [
 			dir: 'dist',
 			format: 'cjs',
 			sourcemap: true,
-			chunkFileNames: '[name].js'
+			chunkFileNames: '[name].js',
+			interop: false,
 		},
 		external,
 		plugins: [
